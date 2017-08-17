@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Hello, World! - A-Frame</title>
+    <meta name="description" content="Hello, World! - A-Frame">
+    <script src="https://aframe.io/releases/0.6.1/aframe.min.js"></script>
+    <!--budowa otoczenia--!>
+    <script src="https://rawgit.com/feiss/aframe-environment-component/master/dist/aframe-environment-component.min.js"></script>
+    
+    <script src="//cdn.rawgit.com/donmccurdy/aframe-extras/v3.9.0/dist/aframe-extras.min.js"></script>
+    <!--osadzanie video--!>
+    <script src="https://rawgit.com/mayognaise/aframe-video-shader/master/dist/aframe-vid-shader.min.js"></script>
+    
+    <script src="https://rawgit.com/ngokevin/aframe-animation-component/master/dist/aframe-animation-component.min.js"></script>
+    <script src="https://rawgit.com/ngokevin/aframe-event-set-component/master/dist/aframe-event-set-component.min.js"></script>
+    <script src="https://unpkg.com/aframe-layout-component@4.1.0/dist/aframe-layout-component.min.js"></script>
+  </head>
+  <body>
+    <a-scene>
+    <a-assets>
+    <video id="my-video" src="gdzie_j_d.mp4" autoplay="true">
+  </a-assets>
+    <script>
+    AFRAME.registerComponent('build_interface', {
+    	schema: {
+    		quantity: { type: 'int', default: 5 },
+    		distance: { type: 'int', default: 5 },
+    		planeWidth: { default: 2 },
+    		planeHeight: { default: 1 },
+    		yPosition: { default: 1 },
+    		event-set__enter: {
+    			_event: 'mouseenter',
+    			color: '#000000'
+    			}
+    		},    		
+        init: function () {
+        var el = this.el;
+        var step = 2 * Math.PI / this.data.quantity,
+            turn = 360 / this.data.quantity;
+        for (var i = 0, angle = 0; i < this.data.quantity; i++, angle += step) {
+
+            var xPos = this.data.distance * Math.cos(angle);
+            var zPos = this.data.distance * Math.sin(angle);
+
+                w = document.createElement('a-entity');
+                w.setAttribute('geometry', {
+                	primitive: 'plane',
+                	width: this.data.planeWidth,
+                	height: this.data.planeHeight
+                	});
+        		w.setAttribute('material', {
+        		color: '#ffffff',
+        		//shader: 'video',
+        		side: 'double'
+        		//src: '#my-video',
+        		//volume: 60
+        		});
+        		w.setAttribute('width', 2);
+        		w.setAttribute('height', 1);
+        		w.setAttribute('event-set__enter','event', 'mouseenter'); 
+        		//_event: 'mouseenter'
+        		//});
+                w.setAttribute('position', {
+                        x: xPos,
+                        y: this.data.yPosition,
+                        z: zPos
+                    });
+                w.setAttribute('rotation', {
+                        x: 0,
+                        y: 0 - 90 - i * turn,
+                        z: 0
+                    })
+        this.el.appendChild(w).flushToDOM();
+        }
+        }
+    });
+     var rotatePos_to = 18;
+     AFRAME.registerComponent('event-proxy', {
+  	schema: {
+    	listen: {default: ''},
+    	target: {type: 'selector'},
+    	emit: {default: ''}
+  	},
+
+  update: function () {
+    var data = this.data;
+    this.el.addEventListener(data.listen, function () {
+    	if(data.emit == 'rotate_screens_p' ) {
+    		rotatePos_to = rotatePos_to -36;
+    		console.log(data.emit, rotatePos_to);}
+    	else if (data.emit =='rotate_screens_n') {
+    	rotatePos_to = rotatePos_to +36;
+    		console.log(data.emit, rotatePos_to);}
+    	
+    	
+    	data.target.setAttribute('animation__rotation', {
+          	property: 'rotation',
+          	to:  '0 ' + rotatePos_to + ' 0',
+          	startEvents: 'rotate_screens_p, rotate screens_n',
+          	easing: 'easeInCubic',
+          	dir: 'normal',
+          	dur: '500',
+          	loop: 'false'  
+          	});	
+      data.target.emit(data.emit);
+    });
+  }
+});
+</script>
+     
+  	<a-entity camera="userHeight: 1.6" universal-controls="movementControls:checkpoint" checkpoint-controls="mode:animate" hmd-controls="" gamepad-controls="" mouse-controls="" wasd-controls="">
+  	<a-entity 
+      	position="0 0 -1"
+      	geometry="primitive: ring; radiusInner: 0.02; radiusOuter: 0.03"
+      	material="color: black; shader: flat">
+        </a-entity>
+        <a-entity cursor="fuse:true" raycaster="far:12; interval: 1000; objects: .clickable; fuseTimeout:500; showLine:true" 
+        position="0 0 -1"
+        geometry="primitive: ring; radiusInner: 0.02; radiusOuter: 0.03"
+      	material="color: white; shader: flat">
+  		<a-animation begin="cursor-fusing" easing="ease-in" attribute="geometry.thetaLength" fill="forwards" from="0" to="360"></a-animation>
+    	</a-entity>
+     </a-entity>
+     
+    <a-entity environment="preset:goaland; fog:0">
+    <a-entity geometry="primitive: circle; radius: 20; thetaStart:0; thetaLength:36;" position="0 0.2 0" rotation="-90 72 0" material="color: #b3ffff;"></a-entity>
+    </a-entity>
+    <a-entity id="cta" geometry="primitive: circle; radius: 0.2;" position="-0.3 1 -4" class="clickable" event-proxy="listen: click; emit: rotate_screens_p; target: #interface;"></a-entity>
+    <a-entity id="cta2" geometry="primitive: circle; radius: 0.2;" position="0.3 1 -4" class="clickable" event-proxy="listen: click; emit: rotate_screens_n; target: #interface;"></a-entity>
+    <a-entity id="interface" position="0 0.5 0" rotation="0 18 0" scale="1 1 1" visible="true" build_interface="quantity: 10; distance:5; planeWidth: 2.5; planeHeight:1.5; yPosition: 1;" animation__rotation="property: rotation; dir: normal; dur: 1000; easing: easeInSine; loop: false; startEvents: rotate_screens_p, rotate_screens_n;">
+    </a-entity>
+    
+    </a-scene>
+  </body>
+</html>
